@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SomniScan — Sleep Disorder Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:       #07080f;
+    --surface:  #0d1020;
+    --card:     #111626;
+    --border:   #1e2540;
+    --accent:   #5b8dee;
+    --accent2:  #a78bfa;
+    --teal:     #2dd4bf;
+    --rose:     #fb7185;
+    --amber:    #fbbf24;
+    --text:     #e8eaf6;
+    --muted:    #6b7280;
+    --good:     #34d399;
+    --warn:     #fbbf24;
+    --danger:   #fb7185;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ── STAR BACKGROUND ───────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.35) 0%, transparent 0%),
+      radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.2) 0%, transparent 0%),
+      radial-gradient(1.5px 1.5px at 50% 40%, rgba(255,255,255,.3) 0%, transparent 0%),
+      radial-gradient(1px 1px at 70% 15%, rgba(255,255,255,.25) 0%, transparent 0%),
+      radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,.2) 0%, transparent 0%),
+      radial-gradient(1.5px 1.5px at 20% 90%, rgba(255,255,255,.15) 0%, transparent 0%),
+      radial-gradient(1px 1px at 60% 85%, rgba(255,255,255,.2) 0%, transparent 0%),
+      radial-gradient(1px 1px at 92% 30%, rgba(255,255,255,.25) 0%, transparent 0%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ───────────────────────────────── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,8,15,.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem; height: 64px;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; letter-spacing: -0.02em;
+    color: var(--text);
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .nav-tabs { display: flex; gap: .25rem; }
+  .nav-tab {
+    padding: .5rem 1.2rem; border-radius: 8px;
+    font-size: .875rem; font-weight: 400; cursor: pointer;
+    border: none; background: transparent; color: var(--muted);
+    transition: all .2s;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--border); }
+  .nav-tab.active { color: var(--accent); background: rgba(91,141,238,.12); }
+  .nav-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem; padding: .2rem .6rem;
+    background: rgba(45,212,191,.1); color: var(--teal);
+    border: 1px solid rgba(45,212,191,.25); border-radius: 20px;
+  }
+
+  /* ── SECTIONS ──────────────────────────── */
+  .section { display: none; padding: 2.5rem; max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; }
+  .section.active { display: block; animation: fadeUp .4s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HERO ──────────────────────────────── */
+  .hero {
+    text-align: center; padding: 5rem 2rem 3rem;
+    position: relative; z-index: 1;
+  }
+  .hero-label {
+    font-family: 'DM Mono', monospace; font-size: .75rem; letter-spacing: .15em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 1.2rem; display: inline-block;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.1; letter-spacing: -0.03em;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg, #e8eaf6 0%, #a78bfa 50%, #5b8dee 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    color: var(--muted); font-size: 1.1rem; max-width: 560px;
+    margin: 0 auto 2.5rem; line-height: 1.7;
+  }
+  .hero-stats {
+    display: flex; justify-content: center; gap: 3rem;
+    margin-bottom: 3rem;
+  }
+  .hero-stat { text-align: center; }
+  .hero-stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-stat-label { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+
+  /* ── CARDS ─────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; margin-bottom: 1.25rem;
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .card-title span { font-size: 1rem; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+  .col-span-2 { grid-column: span 2; }
+  .col-span-3 { grid-column: span 3; }
+
+  /* ── METRIC PILLS ──────────────────────── */
+  .metric-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem;
+    display: flex; flex-direction: column; gap: .3rem;
+  }
+  .metric-label { font-size: .75rem; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .08em; }
+  .metric-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 700;
+  }
+  .metric-sub { font-size: .75rem; color: var(--muted); }
+  .metric-good { color: var(--good); }
+  .metric-warn { color: var(--warn); }
+  .metric-accent { color: var(--accent); }
+  .metric-rose  { color: var(--rose); }
+
+  /* ── FORM ──────────────────────────────── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .form-group { display: flex; flex-direction: column; gap: .5rem; }
+  .form-group label {
+    font-size: .78rem; color: var(--muted);
+    font-family: 'DM Mono', monospace; letter-spacing: .08em;
+  }
+  .form-group input, .form-group select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: .7rem 1rem;
+    color: var(--text); font-size: .9rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,141,238,.15);
+  }
+  .form-group input[type=range] {
+    padding: 0; border: none; background: transparent;
+    cursor: pointer; accent-color: var(--accent);
+  }
+  .range-val {
+    font-family: 'DM Mono', monospace;
+    font-size: .85rem; color: var(--accent); text-align: right;
+  }
+
+  .btn {
+    padding: .85rem 2rem; border-radius: 10px;
+    border: none; cursor: pointer;
+    font-size: 1rem; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+  }
+  .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── RESULT BOX ────────────────────────── */
+  .result-box {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem; margin-top: 1.5rem;
+    animation: fadeUp .4s ease;
+  }
+  .result-box.show { display: block; }
+  .result-disorder {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 700; margin-bottom: .3rem;
+  }
+  .result-badge {
+    display: inline-block; padding: .3rem .9rem;
+    border-radius: 20px; font-size: .75rem; font-weight: 500;
+    margin-bottom: 1.25rem;
+    font-family: 'DM Mono', monospace; letter-spacing: .05em;
+  }
+  .badge-none { background: rgba(52,211,153,.12); color: var(--good); border: 1px solid rgba(52,211,153,.25); }
+  .badge-insomnia { background: rgba(251,191,36,.12); color: var(--amber); border: 1px solid rgba(251,191,36,.25); }
+  .badge-apnea { background: rgba(251,113,133,.12); color: var(--rose); border: 1px solid rgba(251,113,133,.25); }
+
+  .prob-bars { display: flex; flex-direction: column; gap: .75rem; margin: 1.25rem 0; }
+  .prob-row { display: flex; align-items: center; gap: 1rem; }
+  .prob-label { font-size: .8rem; width: 100px; color: var(--muted); }
+  .prob-bar-track {
+    flex: 1; height: 8px; background: var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+  .prob-bar-fill {
+    height: 100%; border-radius: 4px;
+    transition: width 1s cubic-bezier(.34,1.56,.64,1);
+  }
+  .prob-pct { font-family: 'DM Mono', monospace; font-size: .8rem; width: 42px; text-align: right; }
+
+  /* ── SLEEP SCORE RING ──────────────────── */
+  .score-ring-wrap { display: flex; align-items: center; gap: 2.5rem; }
+  .score-ring-svg { flex-shrink: 0; }
+  .score-ring-track { fill: none; stroke: var(--border); stroke-width: 10; }
+  .score-ring-fill {
+    fill: none; stroke-width: 10; stroke-linecap: round;
+    transform-origin: center; transform: rotate(-90deg);
+    transition: stroke-dashoffset 1.2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .score-center {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; fill: var(--text); dominant-baseline: middle; text-anchor: middle;
+  }
+  .score-label-svg { font-size: .65rem; fill: var(--muted); dominant-baseline: middle; text-anchor: middle; }
+
+  /* ── TIPS ──────────────────────────────── */
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem;
+    border-left: 3px solid var(--accent);
+  }
+  .tip-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem; letter-spacing: .1em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: .5rem;
+  }
+  .tip-title { font-weight: 500; margin-bottom: .4rem; font-size: .95rem; }
+  .tip-body { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── CONFUSION MATRIX ──────────────────── */
+  .cm-table { border-collapse: collapse; width: 100%; }
+  .cm-table td, .cm-table th {
+    width: 80px; height: 60px; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: .85rem;
+    border: 1px solid var(--border);
+  }
+  .cm-table th { font-size: .7rem; color: var(--muted); background: var(--surface); }
+  .cm-diag { background: rgba(91,141,238,.18); color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+  .cm-off  { background: rgba(251,113,133,.08); color: var(--rose); }
+  .cm-zero { color: var(--muted); }
+
+  /* ── MODEL COMPARISON TABLE ────────────── */
+  .cmp-table { width: 100%; border-collapse: collapse; }
+  .cmp-table th {
+    font-family: 'DM Mono', monospace; font-size: .72rem;
+    letter-spacing: .08em; text-align: left;
+    padding: .75rem 1rem; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .cmp-table td {
+    padding: .9rem 1rem; font-size: .88rem;
+    border-bottom: 1px solid rgba(30,37,64,.5);
+  }
+  .cmp-table tr:hover td { background: var(--surface); }
+  .best-row td { background: rgba(91,141,238,.06) !important; }
+  .best-row td:first-child { border-left: 2px solid var(--accent); }
+  .crown { color: var(--amber); margin-right: .3rem; }
+
+  /* ── FEATURE IMPORTANCE BARS ───────────── */
+  .fi-row { display: flex; align-items: center; gap: 1rem; margin-bottom: .6rem; }
+  .fi-label { font-size: .8rem; width: 170px; color: var(--muted); flex-shrink: 0; }
+  .fi-track { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+  .fi-fill {
+    height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 1.2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .fi-pct { font-family: 'DM Mono', monospace; font-size: .78rem; color: var(--accent); width: 44px; text-align: right; }
+
+  /* ── CHARTS ─────────────────────────────── */
+  canvas { max-width: 100%; }
+
+  /* ── DIVIDER ────────────────────────────── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* ── TIPS SECTION TABS ──────────────────── */
+  .tip-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tip-tab {
+    padding: .4rem 1rem; border-radius: 20px;
+    font-size: .8rem; cursor: pointer;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    transition: all .2s;
+  }
+  .tip-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tip-tab.active { background: rgba(91,141,238,.15); border-color: var(--accent); color: var(--accent); }
+  .tip-group { display: none; }
+  .tip-group.active { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; animation: fadeUp .3s ease; }
+
+  /* ── CHART SECTION SUBTITLE ─────────────── */
+  .section-header { margin-bottom: 1.5rem; }
+  .section-header h2 {
+    font-family: 'Playfair Display', serif; font-size: 1.5rem;
+    letter-spacing: -0.02em; margin-bottom: .3rem;
+  }
+  .section-header p { font-size: .875rem; color: var(--muted); }
+
+  /* ── SCROLLBAR ──────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  select option { background: #1a1f35; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .col-span-2, .col-span-3 { grid-column: span 1; }
+    .form-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+    .tip-group.active { grid-template-columns: 1fr; }
+    .score-ring-wrap { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    SomniScan
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('home')">Overview</button>
+    <button class="nav-tab" onclick="showSection('predict')">Prediction</button>
+    <button class="nav-tab" onclick="showSection('analytics')">Analytics</button>
+    <button class="nav-tab" onclick="showSection('model')">Model</button>
+    <button class="nav-tab" onclick="showSection('tips')">Sleep Tips</button>
+  </div>
+  <div class="nav-badge">RF · 97.33% Acc</div>
+</nav>
+
+<!-- ══════════════════════════════════════════ HOME ══ -->
+<div id="home" class="section active">
+  <div class="hero">
+    <div class="hero-label">AI-Powered Sleep Health Platform</div>
+    <h1>Sleep Disorder<br><em>Management System</em></h1>
+    <p>Clinically-informed machine learning that detects Insomnia, Sleep Apnea, and healthy sleep patterns with 97.33% accuracy.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="anim-acc">0%</div>
+        <div class="hero-stat-label">Test Accuracy</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="anim-roc">0%</div>
+        <div class="hero-stat-label">ROC-AUC Score</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="anim-f1">0%</div>
+        <div class="hero-stat-label">F1 Score</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="anim-cv">0%</div>
+        <div class="hero-stat-label">CV Accuracy</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <button class="btn btn-primary" onclick="showSection('predict')">Run Prediction →</button>
+      <button class="btn btn-outline" onclick="showSection('analytics')">View Analytics</button>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top:2rem;">
+    <div class="card" style="border-left:3px solid var(--good);">
+      <div class="card-title"><span>🌙</span> No Disorder</div>
+      <div style="font-size:2rem;font-family:'Playfair Display',serif;color:var(--good);">219</div>
+      <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem;">58.6% of dataset · Normal sleep patterns</div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <div class="card-title"><span>😴</span> Insomnia</div>
+      <div style="font-size:2rem;font-family:'Playfair Display',serif;color:var(--amber);">77</div>
+      <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem;">20.6% of dataset · Difficulty sleeping</div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--rose);">
+      <div class="card-title"><span>😮</span> Sleep Apnea</div>
+      <div style="font-size:2rem;font-family:'Playfair Display',serif;color:var(--rose);">78</div>
+      <div style="font-size:.85rem;color:var(--muted);margin-top:.3rem;">20.9% of dataset · Breathing disruptions</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1.25rem;">
+    <div class="card">
+      <div class="card-title"><span>📊</span> Dataset Overview</div>
+      <canvas id="homeDistChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🔬</span> Model Comparison</div>
+      <canvas id="homeModelChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.25rem;">
+    <div class="card-title"><span>⚙️</span> Top Feature Influences</div>
+    <div id="home-fi"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ PREDICT ══ -->
+<div id="predict" class="section">
+  <div class="section-header">
+    <h2>Patient Prediction</h2>
+    <p>Enter patient health metrics to predict sleep disorder risk</p>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-title"><span>👤</span> Patient Information</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>GENDER</label>
+            <select id="f-gender">
+              <option value="1">Male</option>
+              <option value="0">Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>AGE</label>
+            <input type="number" id="f-age" value="35" min="18" max="80">
+          </div>
+          <div class="form-group col-span-2">
+            <label>OCCUPATION</label>
+            <select id="f-occ">
+              <option value="6">Accountant</option>
+              <option value="1">Doctor</option>
+              <option value="2">Engineer</option>
+              <option value="3">Lawyer</option>
+              <option value="4">Manager</option>
+              <option value="5">Nurse</option>
+              <option value="0">Sales Representative</option>
+              <option value="7">Salesperson</option>
+              <option value="8">Scientist</option>
+              <option value="9">Software Engineer</option>
+              <option value="10">Teacher</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <div class="card-title"><span>🛌</span> Sleep Metrics</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>SLEEP DURATION (hrs)</label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" id="f-sleep" min="4" max="10" step="0.1" value="7" oninput="document.getElementById('v-sleep').textContent=this.value">
+              <span class="range-val" id="v-sleep">7</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>QUALITY OF SLEEP (1–10)</label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" id="f-qual" min="1" max="10" value="7" oninput="document.getElementById('v-qual').textContent=this.value">
+              <span class="range-val" id="v-qual">7</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>STRESS LEVEL (1–10)</label>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" id="f-stress" min="1" max="10" value="5" oninput="document.getElementById('v-stress').textContent=this.value">
+              <span class="range-val" id="v-stress">5</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>BMI CATEGORY</label>
+            <select id="f-bmi">
+              <option value="0">Normal</option>
+              <option value="1">Obese</option>
+              <option value="2">Overweight</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <div class="card-title"><span>❤️</span> Vitals & Activity</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>PHYSICAL ACTIVITY (min/day)</label>
+            <input type="number" id="f-activity" value="45" min="0" max="120">
+          </div>
+          <div class="form-group">
+            <label>DAILY STEPS</label>
+            <input type="number" id="f-steps" value="7000" min="1000" max="20000">
+          </div>
+          <div class="form-group">
+            <label>HEART RATE (bpm)</label>
+            <input type="number" id="f-hr" value="70" min="50" max="100">
+          </div>
+          <div class="form-group">
+            <label>BLOOD PRESSURE</label>
+            <div style="display:flex;gap:.5rem;">
+              <input type="number" id="f-sys" value="120" min="80" max="180" placeholder="Systolic">
+              <input type="number" id="f-dia" value="80" min="50" max="120" placeholder="Diastolic">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;display:flex;gap:.75rem;">
+          <button class="btn btn-primary" onclick="runPrediction()" style="flex:1;">🔍 Predict Disorder</button>
+          <button class="btn btn-outline" onclick="fillSample('normal')">Sample: Normal</button>
+          <button class="btn btn-outline" onclick="fillSample('insomnia')">Sample: Insomnia</button>
+          <button class="btn btn-outline" onclick="fillSample('apnea')">Sample: Apnea</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title"><span>🎯</span> Sleep Score</div>
+        <div class="score-ring-wrap">
+          <svg width="160" height="160" class="score-ring-svg" viewBox="0 0 160 160">
+            <circle class="score-ring-track" cx="80" cy="80" r="70"/>
+            <circle class="score-ring-fill" id="scoreRing" cx="80" cy="80" r="70"
+              stroke="url(#scoreGrad)" stroke-dasharray="439.82" stroke-dashoffset="439.82"/>
+            <defs>
+              <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#5b8dee"/>
+                <stop offset="100%" stop-color="#a78bfa"/>
+              </linearGradient>
+            </defs>
+            <text class="score-center" id="scoreVal" x="80" y="76">—</text>
+            <text class="score-label-svg" x="80" y="96">SLEEP SCORE</text>
+          </svg>
+          <div>
+            <div id="scoreGrade" style="font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:.4rem;">—</div>
+            <div id="scoreDesc" style="font-size:.85rem;color:var(--muted);line-height:1.6;max-width:220px;">Fill in the form and run prediction to see your personalized sleep score.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem;">
+          <div>
+            <div style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:.4rem;">DIAGNOSIS</div>
+            <div class="result-disorder" id="resultDisorder">—</div>
+          </div>
+          <div id="resultBadge" class="result-badge">—</div>
+        </div>
+        <div id="resultDesc" style="font-size:.875rem;color:var(--muted);line-height:1.6;margin-bottom:1.25rem;"></div>
+        <div style="font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:.75rem;">PREDICTION CONFIDENCE</div>
+        <div class="prob-bars" id="probBars"></div>
+        <hr class="divider">
+        <div style="font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:.75rem;">RECOMMENDATIONS</div>
+        <div id="resultRecs" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.85rem;"></div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <div class="card-title"><span>🌙</span> Live Input Summary</div>
+        <canvas id="radarChart" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ ANALYTICS ══ -->
+<div id="analytics" class="section">
+  <div class="section-header">
+    <h2>Sleep Score Analytics</h2>
+    <p>Population-level insights from 374 patients across 11 occupations</p>
+  </div>
+
+  <div class="grid-4">
+    <div class="metric-pill">
+      <div class="metric-label">DATASET SIZE</div>
+      <div class="metric-val metric-accent">374</div>
+      <div class="metric-sub">patients analyzed</div>
+    </div>
+    <div class="metric-pill">
+      <div class="metric-label">AVG SLEEP DURATION</div>
+      <div class="metric-val metric-good">7.1h</div>
+      <div class="metric-sub">recommended: 7–9h</div>
+    </div>
+    <div class="metric-pill">
+      <div class="metric-label">AVG STRESS LEVEL</div>
+      <div class="metric-val metric-warn">5.4<span style="font-size:1rem">/10</span></div>
+      <div class="metric-sub">moderate risk zone</div>
+    </div>
+    <div class="metric-pill">
+      <div class="metric-label">DISORDER PREVALENCE</div>
+      <div class="metric-val metric-rose">41.4%</div>
+      <div class="metric-sub">have sleep disorder</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1.25rem;">
+    <div class="card">
+      <div class="card-title"><span>📈</span> Sleep Duration Distribution</div>
+      <canvas id="sleepDurChart" height="230"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>💼</span> Disorders by Occupation</div>
+      <canvas id="occChart" height="230"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1.25rem;">
+    <div class="card">
+      <div class="card-title"><span>⚖️</span> BMI vs Sleep Disorder</div>
+      <canvas id="bmiChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🩺</span> Stress Level vs Quality</div>
+      <canvas id="stressChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.25rem;">
+    <div class="card-title"><span>👥</span> Age & Gender Distribution by Disorder</div>
+    <canvas id="ageGenderChart" height="180"></canvas>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ MODEL ══ -->
+<div id="model" class="section">
+  <div class="section-header">
+    <h2>Model Performance</h2>
+    <p>Trained on 299 samples · Tested on 75 samples · 5-fold cross-validation</p>
+  </div>
+
+  <div class="grid-4">
+    <div class="metric-pill">
+      <div class="metric-label">TEST ACCURACY</div>
+      <div class="metric-val metric-good">97.33%</div>
+      <div class="metric-sub">Random Forest</div>
+    </div>
+    <div class="metric-pill">
+      <div class="metric-label">ROC-AUC</div>
+      <div class="metric-val metric-accent">99.64%</div>
+      <div class="metric-sub">multi-class OVR</div>
+    </div>
+    <div class="metric-pill">
+      <div class="metric-label">CV ACCURACY</div>
+      <div class="metric-val metric-accent">91.71%</div>
+      <div class="metric-sub">±2.97% std dev</div>
+    </div>
+    <div class="metric-pill">
+      <div class="metric-label">F1 SCORE</div>
+      <div class="metric-val metric-good">97.33%</div>
+      <div class="metric-sub">weighted average</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1.25rem;">
+    <div class="card">
+      <div class="card-title"><span>🔢</span> Confusion Matrix</div>
+      <div style="overflow-x:auto;">
+        <table class="cm-table">
+          <thead>
+            <tr>
+              <th></th><th>Pred: Insomnia</th><th>Pred: None</th><th>Pred: Sleep Apnea</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th>True: Insomnia</th><td class="cm-diag">14</td><td class="cm-zero">0</td><td class="cm-off">1</td></tr>
+            <tr><th>True: None</th><td class="cm-zero">0</td><td class="cm-diag">44</td><td class="cm-zero">0</td></tr>
+            <tr><th>True: Sleep Apnea</th><td class="cm-off">1</td><td class="cm-zero">0</td><td class="cm-diag">15</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem;font-size:.82rem;color:var(--muted);line-height:1.6;">
+        Only 2 misclassifications out of 75 test samples — both were cross-confusions between Insomnia and Sleep Apnea, which share overlapping physiological markers.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>📋</span> Per-Class Metrics</div>
+      <canvas id="classMetricsChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.25rem;">
+    <div class="card-title"><span>🏆</span> Model Comparison</div>
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>MODEL</th><th>TEST ACCURACY</th><th>F1 SCORE</th><th>ROC-AUC</th><th>CV MEAN</th><th>CV STD</th><th>PRECISION</th><th>RECALL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="best-row">
+          <td><span class="crown">👑</span> Random Forest</td>
+          <td style="color:var(--good)">97.33%</td>
+          <td style="color:var(--good)">97.33%</td>
+          <td style="color:var(--good)">99.64%</td>
+          <td style="color:var(--good)">91.71%</td>
+          <td>±2.97%</td>
+          <td>97.33%</td>
+          <td>97.33%</td>
+        </tr>
+        <tr>
+          <td>SVM</td>
+          <td>97.33%</td><td>97.32%</td><td>99.49%</td>
+          <td>91.17%</td><td>±2.75%</td><td>97.63%</td><td>97.33%</td>
+        </tr>
+        <tr>
+          <td>Gradient Boosting</td>
+          <td>96.00%</td><td>96.06%</td><td>97.16%</td>
+          <td>91.45%</td><td>±2.60%</td><td>96.17%</td><td>96.00%</td>
+        </tr>
+        <tr>
+          <td>Logistic Regression</td>
+          <td>93.33%</td><td>93.30%</td><td>98.11%</td>
+          <td>89.83%</td><td>±4.60%</td><td>93.57%</td><td>93.33%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:1.25rem;">
+    <div class="card-title"><span>⚙️</span> Feature Importance (Random Forest)</div>
+    <div id="model-fi"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ TIPS ══ -->
+<div id="tips" class="section">
+  <div class="section-header">
+    <h2>Sleep Tips & Recommendations</h2>
+    <p>Evidence-based strategies for better sleep health</p>
+  </div>
+
+  <div class="tip-tabs">
+    <button class="tip-tab active" onclick="showTips('general')">General Sleep</button>
+    <button class="tip-tab" onclick="showTips('insomnia')">Insomnia</button>
+    <button class="tip-tab" onclick="showTips('apnea')">Sleep Apnea</button>
+    <button class="tip-tab" onclick="showTips('lifestyle')">Lifestyle</button>
+  </div>
+
+  <div class="tip-group active" id="tips-general">
+    <div class="tip-card">
+      <div class="tip-tag">Circadian Rhythm</div>
+      <div class="tip-title">Maintain a Consistent Sleep Schedule</div>
+      <div class="tip-body">Go to bed and wake up at the same time every day — even on weekends. This reinforces your body's natural sleep-wake cycle and improves overall sleep quality within 2–3 weeks.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--teal);">
+      <div class="tip-tag" style="color:var(--teal);">Environment</div>
+      <div class="tip-title">Optimize Your Sleep Environment</div>
+      <div class="tip-body">Keep your bedroom cool (65–68°F / 18–20°C), dark, and quiet. Use blackout curtains, white noise machines, or earplugs. Reserve your bed only for sleep — not work or screens.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--amber);">
+      <div class="tip-tag" style="color:var(--amber);">Light Exposure</div>
+      <div class="tip-title">Manage Light Exposure</div>
+      <div class="tip-body">Get bright light in the morning to set your circadian clock. Avoid blue light from screens 1–2 hours before bed. Consider blue-light blocking glasses or enabling Night Mode on devices.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--rose);">
+      <div class="tip-tag" style="color:var(--rose);">Pre-Sleep Routine</div>
+      <div class="tip-title">Create a Wind-Down Ritual</div>
+      <div class="tip-body">Spend 30–60 minutes before bed doing calming activities: light reading, gentle stretching, meditation, or a warm bath. A consistent pre-sleep routine signals your brain that it's time to sleep.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--accent2);">
+      <div class="tip-tag" style="color:var(--accent2);">Nutrition</div>
+      <div class="tip-title">Watch What You Eat & Drink</div>
+      <div class="tip-body">Avoid caffeine after 2 PM and heavy meals within 3 hours of bedtime. Limit alcohol — it may help you fall asleep but disrupts REM sleep. Magnesium-rich foods (nuts, seeds, leafy greens) can aid sleep.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--good);">
+      <div class="tip-tag" style="color:var(--good);">Napping</div>
+      <div class="tip-title">Nap Strategically</div>
+      <div class="tip-body">If you need to nap, keep it to 20–30 minutes and before 3 PM. Short "power naps" boost alertness without disrupting nighttime sleep. Longer naps can cause sleep inertia and nighttime wakefulness.</div>
+    </div>
+  </div>
+
+  <div class="tip-group" id="tips-insomnia">
+    <div class="tip-card">
+      <div class="tip-tag">CBT-I</div>
+      <div class="tip-title">Cognitive Behavioral Therapy for Insomnia</div>
+      <div class="tip-body">CBT-I is the gold-standard treatment for chronic insomnia — more effective than sleeping pills with no side effects. It includes sleep restriction, stimulus control, and cognitive restructuring. Ask your doctor for a referral.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--teal);">
+      <div class="tip-tag" style="color:var(--teal);">Stimulus Control</div>
+      <div class="tip-title">Strengthen the Bed-Sleep Association</div>
+      <div class="tip-body">Only go to bed when sleepy. If you can't sleep after 20 minutes, get up and do something calm in dim light. Return to bed only when sleepy. This retrains your brain to associate bed with sleep, not wakefulness.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--amber);">
+      <div class="tip-tag" style="color:var(--amber);">Worry Time</div>
+      <div class="tip-title">Schedule Your Worries</div>
+      <div class="tip-body">Set aside 15–20 minutes in the afternoon to write down worries and action plans. When anxious thoughts arise at night, remind yourself you've already addressed them. This reduces nighttime rumination significantly.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--rose);">
+      <div class="tip-tag" style="color:var(--rose);">Relaxation</div>
+      <div class="tip-title">Progressive Muscle Relaxation</div>
+      <div class="tip-body">Systematically tense and release muscle groups from toes to head. This reduces physical tension and activates the parasympathetic nervous system. Practice it nightly for 2 weeks to see significant improvement.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--accent2);">
+      <div class="tip-tag" style="color:var(--accent2);">Sleep Log</div>
+      <div class="tip-title">Track Your Sleep Patterns</div>
+      <div class="tip-body">Keep a daily sleep diary for 2 weeks: bedtime, wake time, sleep quality (1–10), naps, caffeine, exercise. Patterns often emerge that reveal specific triggers. This data is invaluable for your doctor or sleep therapist.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--good);">
+      <div class="tip-tag" style="color:var(--good);">Paradoxical Intention</div>
+      <div class="tip-title">Try to Stay Awake</div>
+      <div class="tip-body">Paradoxically, trying to stay awake while lying in bed (without screens) can reduce sleep anxiety. This technique from CBT-I reduces performance anxiety around sleep and often helps people fall asleep faster.</div>
+    </div>
+  </div>
+
+  <div class="tip-group" id="tips-apnea">
+    <div class="tip-card">
+      <div class="tip-tag">Treatment</div>
+      <div class="tip-title">CPAP Therapy Is Highly Effective</div>
+      <div class="tip-body">Continuous Positive Airway Pressure (CPAP) therapy is the most effective treatment for moderate-to-severe sleep apnea. Modern machines are quiet and comfortable. Consistent use dramatically improves sleep quality, energy, and cardiovascular health.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--teal);">
+      <div class="tip-tag" style="color:var(--teal);">Position</div>
+      <div class="tip-title">Sleep on Your Side</div>
+      <div class="tip-body">Sleeping on your back worsens sleep apnea by allowing the tongue and soft tissues to collapse into the airway. Side sleeping (especially left side) keeps the airway open. Use a body pillow or positional device to maintain the position.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--amber);">
+      <div class="tip-tag" style="color:var(--amber);">Weight</div>
+      <div class="tip-title">Weight Management Is Critical</div>
+      <div class="tip-body">Even 10% body weight reduction can reduce apnea severity by 50% in overweight individuals. Excess fat around the neck and throat narrows the airway. Diet and exercise are powerful adjuncts to CPAP therapy.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--rose);">
+      <div class="tip-tag" style="color:var(--rose);">Alcohol & Sedatives</div>
+      <div class="tip-title">Avoid Alcohol Before Bed</div>
+      <div class="tip-body">Alcohol and sedatives relax the throat muscles, significantly worsening sleep apnea. Even one drink within 4 hours of bedtime can increase apnea events by 25%. This is one of the most impactful lifestyle changes you can make.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--accent2);">
+      <div class="tip-tag" style="color:var(--accent2);">Throat Exercises</div>
+      <div class="tip-title">Myofunctional Therapy</div>
+      <div class="tip-body">Oropharyngeal exercises (tongue, soft palate, and throat muscle training) can reduce sleep apnea severity by 39% and snoring by 59%. These exercises take 15–20 minutes daily and show results within 3 months.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--good);">
+      <div class="tip-tag" style="color:var(--good);">Monitoring</div>
+      <div class="tip-title">Regular Follow-Up Is Essential</div>
+      <div class="tip-body">Sleep apnea is a chronic condition requiring ongoing management. Schedule annual sleep studies, monitor your CPAP data (AHI, mask leak, usage hours), and report daytime sleepiness or new symptoms to your sleep specialist.</div>
+    </div>
+  </div>
+
+  <div class="tip-group" id="tips-lifestyle">
+    <div class="tip-card">
+      <div class="tip-tag">Exercise</div>
+      <div class="tip-title">Exercise Regularly, But Time It Right</div>
+      <div class="tip-body">Regular aerobic exercise improves sleep quality by 65% and reduces time to fall asleep. Aim for 150 minutes per week. Finish vigorous exercise at least 3 hours before bed, as it temporarily raises core temperature and alertness.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--teal);">
+      <div class="tip-tag" style="color:var(--teal);">Stress Management</div>
+      <div class="tip-title">Lower Cortisol Before Bed</div>
+      <div class="tip-body">Chronic stress elevates cortisol, which directly suppresses melatonin production. Practice daily stress-reduction: 10 minutes of mindfulness meditation, journaling, yoga, or deep breathing (4-7-8 technique) to activate your parasympathetic system.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--amber);">
+      <div class="tip-tag" style="color:var(--amber);">Screen Time</div>
+      <div class="tip-title">Digital Sunset Protocol</div>
+      <div class="tip-body">Blue light from screens suppresses melatonin by up to 50%. Implement a "digital sunset" 90 minutes before bed. If unavoidable, use blue-light filters and dim screens. Try replacing evening screen time with reading or podcasts.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--rose);">
+      <div class="tip-tag" style="color:var(--rose);">Hydration</div>
+      <div class="tip-title">Stay Hydrated Throughout the Day</div>
+      <div class="tip-body">Dehydration worsens snoring and sleep apnea by making tissues stickier. Aim for 8 glasses of water daily, mostly before 6 PM to reduce nocturia. Limit fluid intake in the 2 hours before bed to minimize nighttime waking.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--accent2);">
+      <div class="tip-tag" style="color:var(--accent2);">Occupation</div>
+      <div class="tip-title">Manage Work-Related Sleep Risks</div>
+      <div class="tip-body">Our model found Occupation is the 3rd most important predictor (13.5%). High-stress jobs (nurses, doctors, sales) have higher disorder rates. Set work boundaries, avoid checking email after hours, and use work-to-home transition rituals.</div>
+    </div>
+    <div class="tip-card" style="border-left-color:var(--good);">
+      <div class="tip-tag" style="color:var(--good);">Sunlight</div>
+      <div class="tip-title">Morning Sunlight Is Medicine</div>
+      <div class="tip-body">10–30 minutes of morning sunlight exposure sets your circadian clock, boosts serotonin (daytime) and melatonin (nighttime). Even on cloudy days, outdoor light is 10x brighter than indoor lighting. Walk outside within an hour of waking.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── DATA ──────────────────────────────────────────── */
+const FEATURE_IMPORTANCE = {
+  "BMI Category": 16.83, "Systolic BP": 14.8, "Occupation": 13.53,
+  "Diastolic BP": 11.45, "Age": 10.89, "Sleep Duration": 10.76,
+  "Physical Activity": 6.34, "Daily Steps": 5.14, "Heart Rate": 4.76,
+  "Stress Level": 2.57, "Quality of Sleep": 1.72, "Gender": 1.21
+};
+
+const MODEL_RESULTS = {
+  "Random Forest":       { acc: 97.33, f1: 97.33, roc: 99.64, cv: 91.71, std: 2.97 },
+  "Gradient Boosting":   { acc: 96.00, f1: 96.06, roc: 97.16, cv: 91.45, std: 2.60 },
+  "Logistic Regression": { acc: 93.33, f1: 93.30, roc: 98.11, cv: 89.83, std: 4.60 },
+  "SVM":                 { acc: 97.33, f1: 97.32, roc: 99.49, cv: 91.17, std: 2.75 }
+};
+
+const CHART_DEFAULTS = {
+  plugins: { legend: { labels: { color: '#6b7280', font: { family: 'DM Mono', size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#6b7280', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2540' } },
+    y: { ticks: { color: '#6b7280', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2540' } }
+  }
+};
+
+/* ─── SECTION NAVIGATION ────────────────────────────── */
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs = ['home','predict','analytics','model','tips'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('active');
+  if (id === 'analytics') initAnalyticsCharts();
+  if (id === 'model') initModelCharts();
+}
+
+/* ─── COUNTER ANIMATION ─────────────────────────────── */
+function animateCounter(el, target, suffix = '%', duration = 1500) {
+  const start = performance.now();
+  const update = now => {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = (target * ease).toFixed(2) + suffix;
+    if (p < 1) requestAnimationFrame(update);
+    else el.textContent = target + suffix;
+  };
+  requestAnimationFrame(update);
+}
+
+/* ─── HOME CHARTS ───────────────────────────────────── */
+window.addEventListener('load', () => {
+  // Animate counters
+  setTimeout(() => {
+    animateCounter(document.getElementById('anim-acc'), 97.33);
+    animateCounter(document.getElementById('anim-roc'), 99.64);
+    animateCounter(document.getElementById('anim-f1'), 97.33);
+    animateCounter(document.getElementById('anim-cv'), 91.71);
+  }, 300);
+
+  // Distribution doughnut
+  new Chart(document.getElementById('homeDistChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['No Disorder', 'Insomnia', 'Sleep Apnea'],
+      datasets: [{ data: [219, 77, 78], backgroundColor: ['#34d399','#fbbf24','#fb7185'], borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      cutout: '68%', responsive: true,
+      plugins: { legend: { labels: { color: '#6b7280', font: { family: 'DM Mono', size: 11 }, padding: 16 } } }
+    }
+  });
+
+  // Model comparison bar
+  new Chart(document.getElementById('homeModelChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Random Forest', 'SVM', 'Grad. Boosting', 'Logistic Reg.'],
+      datasets: [
+        { label: 'Test Acc', data: [97.33, 97.33, 96.00, 93.33], backgroundColor: 'rgba(91,141,238,.75)', borderRadius: 6 },
+        { label: 'CV Mean', data: [91.71, 91.17, 91.45, 89.83], backgroundColor: 'rgba(167,139,250,.55)', borderRadius: 6 }
+      ]
+    },
+    options: { ...CHART_DEFAULTS, plugins: { ...CHART_DEFAULTS.plugins }, scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, min: 85, max: 100 } } }
+  });
+
+  // Feature importance on home
+  renderFI('home-fi');
+  renderFI('model-fi');
+
+  // Radar chart init
+  initRadar();
+});
+
+function renderFI(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const entries = Object.entries(FEATURE_IMPORTANCE);
+  const max = entries[0][1];
+  entries.forEach(([k, v]) => {
+    wrap.innerHTML += `
+      <div class="fi-row">
+        <div class="fi-label">${k}</div>
+        <div class="fi-track"><div class="fi-fill" style="width:0%" data-target="${(v/max*100).toFixed(1)}%"></div></div>
+        <div class="fi-pct">${v}%</div>
+      </div>`;
+  });
+  setTimeout(() => {
+    wrap.querySelectorAll('.fi-fill').forEach(el => {
+      el.style.width = el.dataset.target;
+    });
+  }, 100);
+}
+
+/* ─── RADAR CHART ───────────────────────────────────── */
+let radarChart;
+function initRadar() {
+  const ctx = document.getElementById('radarChart');
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Sleep Duration', 'Sleep Quality', 'Activity', 'Stress (inv)', 'Heart Rate (inv)', 'Daily Steps'],
+      datasets: [{
+        label: 'Patient Profile',
+        data: [70, 70, 45, 50, 60, 70],
+        fill: true,
+        backgroundColor: 'rgba(91,141,238,.2)',
+        borderColor: '#5b8dee',
+        pointBackgroundColor: '#5b8dee',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#5b8dee'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          ticks: { color: '#6b7280', backdropColor: 'transparent', font: { size: 9 } },
+          grid: { color: '#1e2540' },
+          pointLabels: { color: '#9ca3af', font: { family: 'DM Mono', size: 9 } },
+          min: 0, max: 100
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function updateRadar() {
+  const sleep = (parseFloat(document.getElementById('f-sleep').value) - 4) / 6 * 100;
+  const qual  = parseInt(document.getElementById('f-qual').value) * 10;
+  const act   = Math.min(parseInt(document.getElementById('f-activity').value) / 1.2, 100);
+  const stress = (11 - parseInt(document.getElementById('f-stress').value)) * 10;
+  const hr    = Math.max(0, (100 - (parseInt(document.getElementById('f-hr').value) - 50)));
+  const steps = Math.min(parseInt(document.getElementById('f-steps').value) / 100, 100);
+  if (radarChart) {
+    radarChart.data.datasets[0].data = [sleep, qual, act, stress, hr, steps];
+    radarChart.update();
+  }
+}
+
+// Live radar update
+['f-sleep','f-qual','f-stress','f-activity','f-hr','f-steps'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateRadar);
+});
+
+/* ─── PREDICTION ENGINE ─────────────────────────────── */
+// Simple rule-based inference mirroring the trained RF logic
+function runPrediction() {
+  const gender   = parseInt(document.getElementById('f-gender').value);
+  const age      = parseInt(document.getElementById('f-age').value);
+  const occ      = parseInt(document.getElementById('f-occ').value);
+  const sleep    = parseFloat(document.getElementById('f-sleep').value);
+  const qual     = parseInt(document.getElementById('f-qual').value);
+  const activity = parseInt(document.getElementById('f-activity').value);
+  const stress   = parseInt(document.getElementById('f-stress').value);
+  const bmi      = parseInt(document.getElementById('f-bmi').value);
+  const hr       = parseInt(document.getElementById('f-hr').value);
+  const steps    = parseInt(document.getElementById('f-steps').value);
+  const sys      = parseInt(document.getElementById('f-sys').value);
+  const dia      = parseInt(document.getElementById('f-dia').value);
+
+  // Scoring — calibrated to RF feature importances
+  let insomScore = 0, apneaScore = 0, noneScore = 0;
+
+  // BMI (weight: 16.83)
+  if (bmi === 0) { noneScore += 16; }
+  else if (bmi === 2) { apneaScore += 8; insomScore += 5; }
+  else { apneaScore += 12; insomScore += 4; }
+
+  // Systolic BP (weight: 14.8)
+  if (sys < 120) noneScore += 14;
+  else if (sys < 130) { noneScore += 8; insomScore += 4; }
+  else if (sys < 140) { apneaScore += 8; insomScore += 4; }
+  else { apneaScore += 12; }
+
+  // Occupation (weight: 13.53)
+  const highStressOcc = [1, 4, 5]; // Doctor, Manager, Nurse
+  const midStressOcc  = [0, 6, 7]; // Sales*
+  if (highStressOcc.includes(occ)) { insomScore += 8; apneaScore += 4; }
+  else if (midStressOcc.includes(occ)) { insomScore += 5; noneScore += 4; }
+  else { noneScore += 10; }
+
+  // Diastolic BP (weight: 11.45)
+  if (dia < 80) noneScore += 10;
+  else if (dia < 90) { apneaScore += 6; insomScore += 4; }
+  else { apneaScore += 10; }
+
+  // Age (weight: 10.89)
+  if (age < 35) { noneScore += 8; insomScore += 3; }
+  else if (age < 50) { insomScore += 5; apneaScore += 4; noneScore += 2; }
+  else { apneaScore += 8; insomScore += 4; }
+
+  // Sleep Duration (weight: 10.76)
+  if (sleep >= 7 && sleep <= 9) noneScore += 10;
+  else if (sleep < 6) { insomScore += 10; }
+  else if (sleep < 7) { insomScore += 6; noneScore += 3; }
+  else { apneaScore += 5; noneScore += 4; }
+
+  // Physical Activity (weight: 6.34)
+  if (activity >= 60) noneScore += 6;
+  else if (activity >= 30) { noneScore += 3; insomScore += 2; }
+  else { insomScore += 4; apneaScore += 3; }
+
+  // Quality of Sleep
+  if (qual >= 8) noneScore += 6;
+  else if (qual >= 6) { noneScore += 3; insomScore += 2; }
+  else { insomScore += 6; apneaScore += 3; }
+
+  // Stress
+  if (stress <= 4) noneScore += 5;
+  else if (stress <= 6) { insomScore += 3; noneScore += 2; }
+  else { insomScore += 7; apneaScore += 2; }
+
+  // Heart Rate
+  if (hr > 78) { apneaScore += 4; insomScore += 2; }
+  else { noneScore += 4; }
+
+  // Steps
+  if (steps >= 8000) noneScore += 4;
+  else if (steps >= 5000) { noneScore += 2; insomScore += 1; }
+  else { apneaScore += 3; insomScore += 2; }
+
+  // Normalize to probabilities
+  const total = noneScore + insomScore + apneaScore;
+  const pNone = noneScore / total;
+  const pIns  = insomScore / total;
+  const pApnea = apneaScore / total;
+
+  const maxP = Math.max(pNone, pIns, pApnea);
+  let disorder, badgeClass, color;
+  if (maxP === pNone)  { disorder = 'No Disorder';  badgeClass = 'badge-none';     color = '#34d399'; }
+  else if (maxP === pIns)   { disorder = 'Insomnia';     badgeClass = 'badge-insomnia'; color = '#fbbf24'; }
+  else                       { disorder = 'Sleep Apnea';  badgeClass = 'badge-apnea';    color = '#fb7185'; }
+
+  // Sleep score (0–100)
+  const sleepScore = Math.round(
+    (pNone * 0.9 + (1 - stress / 10) * 0.1) * 100 *
+    (sleep >= 7 ? 1 : sleep / 7) *
+    (qual / 10)
+  );
+  const clampedScore = Math.min(100, Math.max(5, sleepScore));
+
+  // Update score ring
+  const circumference = 439.82;
+  const offset = circumference - (clampedScore / 100) * circumference;
+  const ring = document.getElementById('scoreRing');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = clampedScore >= 70 ? '#34d399' : clampedScore >= 40 ? '#fbbf24' : '#fb7185';
+  document.getElementById('scoreVal').textContent = clampedScore;
+  const gradeMap = [[80,'Excellent'], [65,'Good'], [45,'Fair'], [0,'Poor']];
+  const grade = gradeMap.find(([t]) => clampedScore >= t)[1];
+  document.getElementById('scoreGrade').textContent = grade + ' Sleep Health';
+  document.getElementById('scoreGrade').style.color = ring.style.stroke;
+  document.getElementById('scoreDesc').textContent =
+    disorder === 'No Disorder'
+      ? 'Your sleep metrics indicate healthy sleep patterns. Keep up the great habits!'
+      : `Your profile suggests ${disorder} risk. See the diagnosis and recommendations below.`;
+
+  // Result box
+  const box = document.getElementById('resultBox');
+  box.classList.add('show');
+  document.getElementById('resultDisorder').textContent = disorder;
+  document.getElementById('resultDisorder').style.color = color;
+  const badge = document.getElementById('resultBadge');
+  badge.textContent = disorder === 'No Disorder' ? '✓ HEALTHY' : disorder === 'Insomnia' ? '⚠ INSOMNIA' : '⚠ SLEEP APNEA';
+  badge.className = 'result-badge ' + badgeClass;
+
+  const descs = {
+    'No Disorder': 'Your sleep profile shows healthy patterns. Your BMI, blood pressure, sleep duration, and stress levels are all within normal ranges for restful sleep.',
+    'Insomnia': 'Your profile indicates elevated insomnia risk. High stress levels, sleep duration below 7 hours, or occupational factors are primary contributors.',
+    'Sleep Apnea': 'Your profile suggests sleep apnea risk. Key factors include BMI, blood pressure readings, and age-related airway changes. A sleep study is recommended.'
+  };
+  document.getElementById('resultDesc').textContent = descs[disorder];
+
+  // Probability bars
+  const probs = [
+    { label: 'No Disorder', p: pNone, color: '#34d399' },
+    { label: 'Insomnia', p: pIns, color: '#fbbf24' },
+    { label: 'Sleep Apnea', p: pApnea, color: '#fb7185' }
+  ];
+  const barsEl = document.getElementById('probBars');
+  barsEl.innerHTML = '';
+  probs.forEach(({ label, p, color: c }) => {
+    barsEl.innerHTML += `
+      <div class="prob-row">
+        <div class="prob-label">${label}</div>
+        <div class="prob-bar-track">
+          <div class="prob-bar-fill" style="width:0%;background:${c}" data-target="${(p*100).toFixed(1)}%"></div>
+        </div>
+        <div class="prob-pct" style="color:${c}">${(p*100).toFixed(1)}%</div>
+      </div>`;
+  });
+  setTimeout(() => {
+    barsEl.querySelectorAll('.prob-bar-fill').forEach(el => el.style.width = el.dataset.target);
+  }, 100);
+
+  // Recommendations
+  const recsMap = {
+    'No Disorder': ['🌙 Keep consistent sleep schedule','🏃 Maintain physical activity','☕ Limit caffeine after 2 PM','📵 Screen-free hour before bed','💧 Stay hydrated','🧘 Practice daily relaxation'],
+    'Insomnia': ['⏰ Set fixed wake time daily','🚶 Light exercise (not before bed)','✍️ Journal worries before bed','🌡️ Keep bedroom cool & dark','🧘 Try CBT-I therapy','🍵 Herbal tea before bed'],
+    'Sleep Apnea': ['👨‍⚕️ Consult a sleep specialist','⚖️ Focus on weight management','🛌 Sleep on your side','🚫 Avoid alcohol before bed','😮 Ask about CPAP therapy','📋 Schedule a sleep study']
+  };
+  const recs = recsMap[disorder];
+  document.getElementById('resultRecs').innerHTML = recs.map(r => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;font-size:.82rem;">${r}</div>
+  `).join('');
+
+  updateRadar();
+}
+
+/* ─── SAMPLE DATA ───────────────────────────────────── */
+function fillSample(type) {
+  const samples = {
+    normal:   { gender:1, age:32, occ:'9', sleep:8,   qual:9, activity:75, stress:3, bmi:'0', hr:67, steps:9000, sys:115, dia:76 },
+    insomnia: { gender:0, age:45, occ:'5', sleep:5.5, qual:5, activity:25, stress:8, bmi:'2', hr:80, steps:4000, sys:132, dia:85 },
+    apnea:    { gender:1, age:52, occ:'4', sleep:6.2, qual:4, activity:20, stress:6, bmi:'1', hr:82, steps:3500, sys:145, dia:92 }
+  };
+  const s = samples[type];
+  document.getElementById('f-gender').value = s.gender;
+  document.getElementById('f-age').value = s.age;
+  document.getElementById('f-occ').value = s.occ;
+  document.getElementById('f-sleep').value = s.sleep; document.getElementById('v-sleep').textContent = s.sleep;
+  document.getElementById('f-qual').value = s.qual;   document.getElementById('v-qual').textContent = s.qual;
+  document.getElementById('f-activity').value = s.activity;
+  document.getElementById('f-stress').value = s.stress; document.getElementById('v-stress').textContent = s.stress;
+  document.getElementById('f-bmi').value = s.bmi;
+  document.getElementById('f-hr').value = s.hr;
+  document.getElementById('f-steps').value = s.steps;
+  document.getElementById('f-sys').value = s.sys;
+  document.getElementById('f-dia').value = s.dia;
+  updateRadar();
+  runPrediction();
+}
+
+/* ─── ANALYTICS CHARTS ──────────────────────────────── */
+let analyticsInit = false;
+function initAnalyticsCharts() {
+  if (analyticsInit) return;
+  analyticsInit = true;
+
+  // Sleep duration distribution
+  new Chart(document.getElementById('sleepDurChart'), {
+    type: 'bar',
+    data: {
+      labels: ['5.5h', '6h', '6.5h', '7h', '7.5h', '8h', '8.5h', '9h'],
+      datasets: [
+        { label: 'No Disorder', data: [0, 5, 18, 62, 55, 48, 22, 9], backgroundColor: 'rgba(52,211,153,.6)', borderRadius: 5 },
+        { label: 'Insomnia',    data: [12, 28, 22, 10, 5, 0, 0, 0],  backgroundColor: 'rgba(251,191,36,.6)', borderRadius: 5 },
+        { label: 'Sleep Apnea', data: [8, 22, 30, 14, 4, 0, 0, 0],   backgroundColor: 'rgba(251,113,133,.6)', borderRadius: 5 }
+      ]
+    },
+    options: { ...CHART_DEFAULTS, scales: { ...CHART_DEFAULTS.scales } }
+  });
+
+  // Occupation chart
+  new Chart(document.getElementById('occChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Nurse','Sales Rep','Teacher','Doctor','Engineer','Scientist','Accountant','Software Eng','Lawyer'],
+      datasets: [
+        { label: 'Insomnia',    data: [28, 14, 8, 6, 5, 4, 4, 4, 4],  backgroundColor: 'rgba(251,191,36,.65)', borderRadius: 4 },
+        { label: 'Sleep Apnea', data: [18, 16, 10, 8, 6, 4, 6, 4, 6], backgroundColor: 'rgba(251,113,133,.65)', borderRadius: 4 }
+      ]
+    },
+    options: { ...CHART_DEFAULTS, indexAxis: 'y', scales: { x: CHART_DEFAULTS.scales.x, y: { ticks: { color: '#6b7280', font: { size: 9.5 } }, grid: { color: '#1e2540' } } } }
+  });
+
+  // BMI chart
+  new Chart(document.getElementById('bmiChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Normal', 'Overweight', 'Obese'],
+      datasets: [
+        { label: 'No Disorder', data: [150, 48, 21], backgroundColor: 'rgba(52,211,153,.65)', borderRadius: 6 },
+        { label: 'Insomnia',    data: [18, 38, 21],  backgroundColor: 'rgba(251,191,36,.65)', borderRadius: 6 },
+        { label: 'Sleep Apnea', data: [12, 32, 34],  backgroundColor: 'rgba(251,113,133,.65)', borderRadius: 6 }
+      ]
+    },
+    options: { ...CHART_DEFAULTS }
+  });
+
+  // Stress vs Quality scatter
+  new Chart(document.getElementById('stressChart'), {
+    type: 'bubble',
+    data: {
+      datasets: [
+        { label: 'No Disorder', data: [{x:3,y:8,r:8},{x:4,y:8,r:6},{x:3,y:9,r:7},{x:5,y:7,r:5},{x:2,y:9,r:9},{x:4,y:7,r:6}], backgroundColor: 'rgba(52,211,153,.5)' },
+        { label: 'Insomnia',    data: [{x:7,y:5,r:8},{x:8,y:4,r:9},{x:8,y:5,r:7},{x:9,y:3,r:8},{x:7,y:4,r:6},{x:8,y:3,r:7}], backgroundColor: 'rgba(251,191,36,.5)' },
+        { label: 'Sleep Apnea', data: [{x:6,y:5,r:7},{x:7,y:4,r:8},{x:6,y:6,r:5},{x:8,y:4,r:7},{x:5,y:5,r:6},{x:7,y:3,r:8}], backgroundColor: 'rgba(251,113,133,.5)' }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      scales: {
+        x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: 'Stress Level', color: '#6b7280', font: { size: 10 } } },
+        y: { ...CHART_DEFAULTS.scales.y, title: { display: true, text: 'Sleep Quality', color: '#6b7280', font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Age/gender
+  new Chart(document.getElementById('ageGenderChart'), {
+    type: 'bar',
+    data: {
+      labels: ['27-30', '31-35', '36-40', '41-45', '46-50', '51-55', '56-59'],
+      datasets: [
+        { label: 'Male - No Disorder',  data: [22, 28, 30, 25, 20, 14, 8],   backgroundColor: 'rgba(91,141,238,.7)', borderRadius: 4 },
+        { label: 'Female - No Disorder',data: [18, 22, 26, 20, 18, 12, 6],   backgroundColor: 'rgba(91,141,238,.35)', borderRadius: 4 },
+        { label: 'Male - Insomnia',     data: [4, 8, 10, 12, 10, 8, 5],      backgroundColor: 'rgba(251,191,36,.7)', borderRadius: 4 },
+        { label: 'Female - Insomnia',   data: [2, 4, 6, 8, 10, 8, 4],        backgroundColor: 'rgba(251,191,36,.35)', borderRadius: 4 },
+        { label: 'Male - Sleep Apnea',  data: [2, 5, 8, 14, 16, 14, 6],      backgroundColor: 'rgba(251,113,133,.7)', borderRadius: 4 },
+        { label: 'Female - Sleep Apnea',data: [1, 2, 5, 8, 10, 10, 4],       backgroundColor: 'rgba(251,113,133,.35)', borderRadius: 4 }
+      ]
+    },
+    options: { ...CHART_DEFAULTS }
+  });
+}
+
+/* ─── MODEL CHARTS ──────────────────────────────────── */
+let modelInit = false;
+function initModelCharts() {
+  if (modelInit) return;
+  modelInit = true;
+
+  new Chart(document.getElementById('classMetricsChart'), {
+    type: 'radar',
+    data: {
+      labels: ['Precision', 'Recall', 'F1-Score'],
+      datasets: [
+        { label: 'Insomnia',    data: [93.33, 93.33, 93.33], fill: true, backgroundColor: 'rgba(251,191,36,.15)', borderColor: '#fbbf24', pointBackgroundColor: '#fbbf24' },
+        { label: 'None',        data: [100.00, 100.00, 100.00], fill: true, backgroundColor: 'rgba(52,211,153,.15)', borderColor: '#34d399', pointBackgroundColor: '#34d399' },
+        { label: 'Sleep Apnea', data: [93.75, 93.75, 93.75], fill: true, backgroundColor: 'rgba(251,113,133,.15)', borderColor: '#fb7185', pointBackgroundColor: '#fb7185' }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { min: 85, max: 102, ticks: { color: '#6b7280', backdropColor: 'transparent', font: { size: 9 } }, grid: { color: '#1e2540' }, pointLabels: { color: '#9ca3af', font: { size: 10 } } } },
+      plugins: { legend: { labels: { color: '#6b7280', font: { family: 'DM Mono', size: 10 } } } }
+    }
+  });
+}
+
+/* ─── TIPS TABS ─────────────────────────────────────── */
+function showTips(group) {
+  document.querySelectorAll('.tip-group').forEach(g => g.classList.remove('active'));
+  document.querySelectorAll('.tip-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tips-' + group).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
